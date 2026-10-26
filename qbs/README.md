@@ -39,6 +39,10 @@ The runner then starts `tinygo run` for each class and talks to the program
 through its standard input and output. The emulator, such as wasmtime or QEMU,
 must be installed.
 
+Use `-target native -emulator` to run the programs as native binaries on the
+host, with no `-target` passed to tinygo. This is a baseline for the other
+targets.
+
 Some emulated targets cannot receive input, for example riscv-qemu and
 cortex-m-qemu. Add `-noinput` for them. The programs then start without the
 host and the serial class is skipped.

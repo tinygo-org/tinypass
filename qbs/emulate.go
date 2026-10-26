@@ -90,7 +90,11 @@ func startEmulator(o options, dir string) (*link, error) {
 	if o.pty {
 		return startEmulatorPTY(o, dir)
 	}
-	args := append([]string{"run", "-target", o.target}, buildFlags(o)...)
+	args := []string{"run"}
+	if o.target != "native" {
+		args = append(args, "-target", o.target)
+	}
+	args = append(args, buildFlags(o)...)
 	cmd := exec.Command(o.tinygo, append(args, dir)...)
 	cmd.Dir = dir
 	return connect(o, cmd, nil)
