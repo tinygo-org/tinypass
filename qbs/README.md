@@ -31,7 +31,9 @@ Classes:
 
 Use `-v` to see the values each test sent, `-port` if the board is not found,
 `-tinygo` for a different tinygo binary and `-path-prepend` to put a flashing
-tool first on PATH. Names after the flags select classes.
+tool first on PATH. Use `-serial usb` or `-serial uart` to build the programs
+with that serial mode, for boards that support more than one. Names after the
+flags select classes.
 
 Use `-emulator` to run the programs in the emulator of the target instead of
 flashing a board, for example `go run ./qbs -target wasip1 -emulator`.

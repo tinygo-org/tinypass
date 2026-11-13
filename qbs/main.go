@@ -157,6 +157,8 @@ type options struct {
 	// a port, so that tinygo finds the board itself.
 	flashPort   string
 	pathPrepend string
+	// serial overrides the serial mode the programs are built with.
+	serial string
 	// noInput is set for emulated targets that cannot receive input.
 	noInput bool
 	// pty runs the emulator under a pseudo terminal, so that emulators that
@@ -172,6 +174,9 @@ type options struct {
 // It waits up to 90 seconds for the drive of a UF2 bootloader to be mounted.
 func flash(o options, dir string) (skip string, err error) {
 	args := []string{"flash", "-target", o.target, "-timeout", "90s"}
+	if o.serial != "" {
+		args = append(args, "-serial", o.serial)
+	}
 	if o.flashPort != "" {
 		args = append(args, "-port", o.flashPort)
 	}
@@ -460,6 +465,7 @@ func main() {
 	tinygo := flag.String("tinygo", "tinygo", "tinygo binary to use")
 	port := flag.String("port", "", "serial port (default: first USB serial port found)")
 	pathPrepend := flag.String("path-prepend", "", "directory to put first on PATH when flashing")
+	serial := flag.String("serial", "", "serial mode the programs are built with, for example usb or uart")
 	verbose := flag.Bool("v", false, "print the values and messages each test sent")
 	dump := flag.Bool("dump", false, "print raw serial data when a class fails to finish")
 	emulate := flag.Bool("emulator", false, "run the programs in the emulator of the target instead of flashing a board")
@@ -500,7 +506,7 @@ func main() {
 
 	_, file, _, _ := runtime.Caller(0)
 	here := filepath.Dir(file)
-	o := options{tinygo: *tinygo, target: *target, port: *port, flashPort: flashPort, pathPrepend: *pathPrepend, noInput: *noInput, pty: *usePTY, scheduler: *scheduler, gc: *gcFlag}
+	o := options{tinygo: *tinygo, target: *target, port: *port, flashPort: flashPort, pathPrepend: *pathPrepend, serial: *serial, noInput: *noInput, pty: *usePTY, scheduler: *scheduler, gc: *gcFlag}
 
 	fmt.Printf("port %s, target %s\n", *port, *target)
 	counts := map[string]int{}
