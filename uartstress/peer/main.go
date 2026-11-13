@@ -2,7 +2,7 @@
 
 // Peer firmware for the UART stress test. Runs on any board with a spare UART,
 // wired to the board under test (TX/RX crossed, common ground). It uses
-// machine.DefaultUART, so any board with a spare UART can be the peer.
+// the UART in link.go, so any board with a spare UART can be the peer.
 //
 // Commands, all multi-byte values little endian:
 //
@@ -23,7 +23,7 @@ import (
 // Spin count before a stalled command is abandoned, roughly 100 ms.
 const idleSpins = 40000
 
-var uart = machine.DefaultUART
+var uart = link
 
 func pattern(i uint32, seed byte) byte {
 	return byte(i*167+(i>>8)*13) + seed
