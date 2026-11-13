@@ -59,7 +59,7 @@ func blocks(n int) {
 }
 
 func main() {
-	uart := machine.DefaultUART
+	uart := link
 	uart.Configure(machine.UARTConfig{BaudRate: 115200})
 	flusher, _ := any(usb).(interface{ Flush() })
 
