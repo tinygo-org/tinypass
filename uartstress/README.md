@@ -89,6 +89,13 @@ receive buffer and sends `P` again to resynchronize.
 | `overrun` | The DUT masks interrupts while the peer sends. Verifies a hardware overrun does not corrupt data (received bytes are an in order subset of what was sent) and the receiver recovers. |
 | `txblocks` | The DUT writes blocks up to 32 KiB to the peer, which returns a checksum. Verifies back to back transmit and `Write` of large buffers. |
 | `baudswitch` | Alternate between two rates 40 times with an echo after each. Verifies repeated reconfiguration. |
+| `sleeppoll` | The peer streams while the DUT polls with spin, `Gosched` and sleeps of 100 µs, 1 ms and 5 ms, at 9600, 115200 and 250000 baud. Verifies receive does not lose bytes when the program sleeps. |
+| `reconfigure` | `Configure` 20 times at one rate, then `Configure` at new rates after switching the peer. Verifies repeated setup leaves receive and transmit working. |
+| `baudstress` | `SetBaudRate` 1000 times in a row, alternating rates with no gap, and while the peer is sending. Verifies it does not hang or corrupt later traffic. |
+| `oddbauds` | Echo at the rates in `extraBauds` (1200 to 921600). Verifies divisors at the extremes. Edit the list to match the peer. |
+| `gcload` | Streams and echoes while goroutines allocate and run the collector. Verifies receive survives GC pauses and allocation. |
+| `usbload` | Streams at 115200 to 500000 baud while the host sends data to the DUT over USB. Verifies USB OUT interrupts do not delay UART receive. The host program starts and stops the load on `# load start` and `# load stop` lines. |
+| `latency` | Streams while spinning and reports the largest gap between received bytes in the detail. Compare it across boards and builds. |
 | soak | Repeated echo and stream rounds with random chunk sizes. Finds rare losses. |
 
 ## Failure modes
@@ -107,6 +114,10 @@ receive buffer and sends `P` again to resynchronize.
 | `framing-recovers` or `overrun-recovers` fails | An error flag is never cleared, so the receiver stays stuck, or an interrupt fires in a loop. |
 | `overrun-no-corruption` fails | After an overrun the driver kept a wrong byte, for example one from a shifted or half received frame. |
 | `tx-block-N` fails | Transmit gaps or truncated output. `Write` returns before the last byte leaves, or TX data is overwritten. |
+| `sleeppoll-sleep*` fails but `spin` and `gosched` pass | Received bytes are lost while the CPU sleeps. Look at the sleep path (`wfe`, power manager, clock gating) and the timer wake up. |
+| `baudstress-*` or `reconfigure-*` fails or the DUT hangs | Writing the baud register while the UART is enabled, or setup run twice leaves hardware or interrupt state wrong. |
+| `usbload-N` fails but `stream-N` passes | USB interrupts delay UART receive. Check interrupt priorities. |
+| `gcload-*` fails but `stream-*` passes | Receive depends on code that allocates or yields in interrupt context, or the GC pause exceeds the buffer time. |
 | `TIMEOUT` or `# no output` | The DUT hung. The last `RUN` line shows the group. A hang in `streams` or `overrun` often means an interrupt storm. Reset the board and rerun that group. |
 
 A single failure in one run can also come from the peer. Run twice, swap the

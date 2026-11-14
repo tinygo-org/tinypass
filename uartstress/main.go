@@ -52,6 +52,7 @@ func main() {
 		close(lines)
 	}()
 
+	var loadStop chan struct{}
 	deadline := time.After(*timeout)
 	quiet := time.NewTimer(10 * time.Second)
 	fails := 0
@@ -63,6 +64,20 @@ func main() {
 				os.Exit(2)
 			}
 			quiet.Reset(10 * time.Second)
+			switch l {
+			case "# load start":
+				if loadStop == nil {
+					loadStop = make(chan struct{})
+					go flood(port, loadStop)
+				}
+				continue
+			case "# load stop":
+				if loadStop != nil {
+					close(loadStop)
+					loadStop = nil
+				}
+				continue
+			}
 			if l == "" || strings.HasPrefix(l, "# progress") {
 				continue
 			}
@@ -82,6 +97,25 @@ func main() {
 		case <-deadline:
 			fmt.Println("TIMEOUT")
 			os.Exit(2)
+		}
+	}
+}
+
+// flood writes to the device as fast as it will accept data until stop is
+// closed. The bytes are ignored by the device.
+func flood(port serial.Port, stop chan struct{}) {
+	buf := make([]byte, 64)
+	for i := range buf {
+		buf[i] = 0xAA
+	}
+	for {
+		select {
+		case <-stop:
+			return
+		default:
+			if _, err := port.Write(buf); err != nil {
+				return
+			}
 		}
 	}
 }
