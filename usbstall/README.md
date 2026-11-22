@@ -9,7 +9,13 @@ Two boards are used. The device under test (DUT) runs `flood/`, which prints
 without end over USB. It also sends one byte over its UART every 256 lines.
 The peer runs `monitor/`, which sends every byte it receives back out of its
 UART. The peer must have a USB bridge on that UART, such as an Arduino Uno R3.
-The host reads the peer port to see whether the DUT main loop still runs.
+A board without a bridge can send the bytes to its USB console instead, as the
+Arduino Nano R4 does in `monitor/link_arduino_nano_r4.go`. The host reads the
+peer port to see whether the DUT main loop still runs.
+
+`flood/` and `monitor/` use `machine.DefaultUART` for the link. On a board
+where that is not wired to the header, such as the Arduino Uno R4 WiFi, add a
+`link_<board>.go` with the board build tag to each of them.
 
 ## Setup
 
@@ -82,6 +88,20 @@ board that hangs needs a reset, and a hang stops every scenario after it.
 | `throughput` | The rate is below `-minrate`. |
 | `touch-bootloader` | The 1200 baud touch is not handled while the main loop is blocked, or the board needs a different reset. Check how the board enters its bootloader. |
 | All windows show the main loop stopped, even with the host reading | The peer does not see the DUT. Check the wire, the common ground and that the peer runs `monitor/`. |
+
+## Arduino Uno R4 WiFi
+
+The USB port of this board is an ESP32-S3 that bridges to a UART of the
+RA4M1. The scenarios test that bridge and not the RA4M1 USB driver. The `close`,
+`resume` and `flush` scenarios pass. `boundary-rx-N` fails for every N, and
+`rxflood-write-completes`, `echo`, `writers` and `throughput` fail after it.
+
+The host writes faster than the 115200 baud UART and nothing slows it down.
+The bridge drops between a fifth and a quarter of the bytes before they reach
+the UART. The UART driver counted no ring buffer overflow, no overrun and no
+framing or parity error, so its 128 byte receive ring is not the cause. The
+Arduino core fails `boundary-rx` on the same board in the same way. Skip these
+scenarios on this board.
 
 ## Commands of the DUT firmware
 

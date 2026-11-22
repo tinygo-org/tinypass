@@ -13,8 +13,11 @@ The DUT reports results to a host PC over its USB serial port.
    whose `DefaultUART` is the console, such as the Arduino Uno R4 WiFi, add a
    `dut/link_<board>.go` with the board build tag that picks another UART
    (see `link_arduino_uno_r4_wifi.go`).
-2. Pick a peer with a UART. `peer/` uses `machine.DefaultUART`. A board whose
-   console is that UART works too, because the peer never prints.
+2. Pick a peer with a UART. `peer/` uses the UART in `peer/link.go`, which is
+   `machine.DefaultUART`. A board whose console is that UART works too,
+   because the peer never prints. On a board where `DefaultUART` is not wired
+   to the header, such as the Arduino Uno R4 WiFi, add a `peer/link_<board>.go`
+   with the board build tag (see `link_arduino_uno_r4_wifi.go`).
 3. Wire DUT TX to peer RX, DUT RX to peer TX, and ground to ground. Check
    that both boards use the same logic level or add a level shifter.
 4. Flash each board.
