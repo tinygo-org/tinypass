@@ -105,6 +105,7 @@ func rnd(s *uint32) byte {
 }
 
 // recoverBauds also lists rates a peer may be left at after a failure.
+// recoverPeer tries extraBauds as well.
 var (
 	bauds        = []uint32{9600, 57600, 115200, 250000, 500000}
 	recoverBauds = []uint32{115200, 9600, 57600, 250000, 500000, 222222, 230400}
@@ -135,11 +136,13 @@ func itoa(v int) string {
 
 // recover finds the peer at whatever baud rate it is at and returns to 115200.
 func recoverPeer() bool {
-	for _, b := range recoverBauds {
-		uart.SetBaudRate(b)
-		time.Sleep(5 * time.Millisecond)
-		if ping() {
-			return setBaud(115200)
+	for _, list := range [][]uint32{recoverBauds, extraBauds} {
+		for _, b := range list {
+			uart.SetBaudRate(b)
+			time.Sleep(5 * time.Millisecond)
+			if ping() {
+				return setBaud(115200)
+			}
 		}
 	}
 	return false
@@ -436,6 +439,13 @@ func runAll() {
 	step("overrun", testOverrun)
 	step("txblocks", testTxBlocks)
 	step("baudswitch", testBaudSwitch)
+	step("sleeppoll", testSleepPoll)
+	step("reconfigure", testReconfigure)
+	step("baudstress", testBaudStress)
+	step("oddbauds", testOddBauds)
+	step("gcload", testGCLoad)
+	step("usbload", testUSBLoad)
+	step("latency", testLatency)
 }
 
 func soak(seconds int) {
